@@ -23,7 +23,8 @@ driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install())
 
 # Telegram Bot Token
 TELEGRAM_TOKEN = '8008607329:AAEjWQsF3OUKLQAOvQIepCeSc7pCZgaYy-Y'
-CHAT_ID = '616796788'  # Replace with your chat ID
+CHAT_ID = '616796788'
+
 
 def check_for_vouchers():
     url = "https://www.gyftr.com/amexrewardmultiplier/amazon-gift-vouchers"
@@ -43,9 +44,9 @@ def check_for_vouchers():
                         json_data = json.loads(json_text)
                         print(f"json_data- {json_data}")
                         if isinstance(json_data, dict) and 'available_qty' in json_data:
-                            name= json_data.get("name"),
-                            price= json_data.get("price"),
-                            available_qty= json_data.get("available_qty")
+                            name = json_data.get("name")
+                            price = json_data.get("price")
+                            available_qty = json_data.get("available_qty")
                             # If the name is not in the dictionary, add it
                             if name not in vouchers:
                                 vouchers[name] = []
@@ -66,6 +67,7 @@ def check_for_vouchers():
 
     return vouchers
 
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text('Bot started! I will send you voucher updates automatically.')
 
@@ -81,15 +83,17 @@ async def send_vouchers(context):
             for detail in details:
                 message += f"  - Price: ₹{detail['Price']}, Available Quantity: {detail['Available Quantity']}\n"
             message += "\n"  # Add a newline for better separation between vouchers
+
         # Send the formatted message
         await context.bot.send_message(chat_id=CHAT_ID, text=message)
-    # else:
-    #     await context.bot.send_message(chat_id=CHAT_ID, text="No Ferns N Petals vouchers found.")
 
-# async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-#     chat_id = update.message.chat.id  # Updated to use the correct attribute
-#     print(f"chat_id - {chat_id}")
-#     await update.message.reply_text(f'Your chat ID is: {chat_id}')
+        # Sleep for 15 days (15 * 24 * 60 * 60 seconds)
+        time.sleep(15 * 24 * 60 * 60)
+
+    # If no vouchers are found, continue scraping
+    else:
+        logging.info("No vouchers found, continuing to scrape...")
+
 
 def main():
     # Create the Application and pass it your bot's token.
@@ -97,11 +101,13 @@ def main():
 
     # Register command handlers
     application.add_handler(CommandHandler("start", start))
-    # Set up the JobQueue to send vouchers every 30 minutes
-    application.job_queue.run_repeating(send_vouchers, interval=10, first=10)  # Sends immediately and then every 30 minutes
+
+    # Set up the JobQueue to scrape every 10 minutes
+    application.job_queue.run_repeating(send_vouchers, interval=600, first=0)  # 600 seconds = 10 minutes
 
     # Start the Bot
     application.run_polling()
+
 
 if __name__ == "__main__":
     main()
